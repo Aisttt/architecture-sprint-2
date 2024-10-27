@@ -10,9 +10,9 @@
    docker compose up -d
    ```
    
-   Если требуется удалить контейнеры 
+   Если требуется удалить контейнеры:
    ```bash
-   docker rm -f $(docker ps -aq) 
+   docker rm -f $(docker ps -aq)
    ```
 
 2. Убедитесь, что все контейнеры запущены:
@@ -75,15 +75,22 @@ EOF
 
 ### 4. Включение шардирования для базы данных и коллекции
 
-После добавления шардов включите шардирование для базы данных `somedb` и коллекции `helloDoc`:
+1. **Создайте индекс на поле `_id` для шардирования**:
+   ```bash
+   docker compose exec -T mongos_router mongosh --port 27024 --quiet <<EOF
+   use somedb
+   db.helloDoc.createIndex({ _id: "hashed" })
+   EOF
+   ```
 
-```bash
-docker compose exec -T mongos_router mongosh --port 27024 --quiet <<EOF
-use admin
-sh.enableSharding("somedb")
-sh.shardCollection("somedb.helloDoc", { "_id": "hashed" })
-EOF
-```
+2. **Включите шардирование для базы данных и коллекции**:
+   ```bash
+   docker compose exec -T mongos_router mongosh --port 27024 --quiet <<EOF
+   use admin
+   sh.enableSharding("somedb")
+   sh.shardCollection("somedb.helloDoc", { "_id": "hashed" })
+   EOF
+   ```
 
 ## Шаги для проверки кэширования
 
@@ -96,9 +103,12 @@ EOF
 ```bash
 docker compose exec -T mongos_router mongosh --port 27024 --quiet <<EOF
 use somedb
+db.helloDoc.deleteMany({})
+let bulk = []
 for (let i = 0; i < 1000; i++) {
-  db.helloDoc.insert({ _id: i, message: "Hello from document " + i })
+  bulk.push({ _id: i, message: "Hello from document " + i })
 }
+db.helloDoc.insertMany(bulk)
 EOF
 ```
 
