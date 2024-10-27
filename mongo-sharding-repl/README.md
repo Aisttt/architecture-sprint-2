@@ -72,6 +72,25 @@ sh.addShard("shard2/shard2-primary:27021")
 EOF
 ```
 
+### 4. Включение шардирования для базы данных `somedb` и коллекции `helloDoc`
+
+Включите шардирование для базы данных `somedb`:
+```bash
+docker compose exec -T mongos_router mongosh --port 27020 --quiet <<EOF
+sh.enableSharding("somedb")
+EOF
+```
+
+Создайте коллекцию `helloDoc` с индексом, необходимым для шардирования:
+```bash
+docker compose exec -T mongos_router mongosh --port 27020 --quiet <<EOF
+use somedb
+db.createCollection("helloDoc")
+db.helloDoc.createIndex({ _id: "hashed" })
+sh.shardCollection("somedb.helloDoc", { _id: "hashed" })
+EOF
+```
+
 ## Проверка работы шардирования и репликации
 
 Добавьте 1000 документов в коллекцию `helloDoc`:
