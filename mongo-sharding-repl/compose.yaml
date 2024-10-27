@@ -1,5 +1,4 @@
 name: mongo-sharding-repl
-version: '3'
 
 services:
   # Сервер конфигурации
@@ -11,7 +10,7 @@ services:
       - "27017:27017"
     networks:
       app-network:
-        ipv4_address: 173.17.0.10
+        ipv4_address: 173.18.0.10
     volumes:
       - config-data:/data/db
     command:
@@ -34,7 +33,7 @@ services:
     container_name: shard1-primary
     networks:
       app-network:
-        ipv4_address: 173.17.0.11
+        ipv4_address: 173.18.0.11
     volumes:
       - shard1-primary-data:/data/db
     command:
@@ -52,7 +51,7 @@ services:
     container_name: shard1-secondary1
     networks:
       app-network:
-        ipv4_address: 173.17.0.12
+        ipv4_address: 173.18.0.12
     volumes:
       - shard1-secondary1-data:/data/db
     command:
@@ -70,7 +69,7 @@ services:
     container_name: shard1-secondary2
     networks:
       app-network:
-        ipv4_address: 173.17.0.13
+        ipv4_address: 173.18.0.13
     volumes:
       - shard1-secondary2-data:/data/db
     command:
@@ -89,7 +88,7 @@ services:
     container_name: shard2-primary
     networks:
       app-network:
-        ipv4_address: 173.17.0.14
+        ipv4_address: 173.18.0.14
     volumes:
       - shard2-primary-data:/data/db
     command:
@@ -107,7 +106,7 @@ services:
     container_name: shard2-secondary1
     networks:
       app-network:
-        ipv4_address: 173.17.0.15
+        ipv4_address: 173.18.0.15
     volumes:
       - shard2-secondary1-data:/data/db
     command:
@@ -125,7 +124,7 @@ services:
     container_name: shard2-secondary2
     networks:
       app-network:
-        ipv4_address: 173.17.0.16
+        ipv4_address: 173.18.0.16
     volumes:
       - shard2-secondary2-data:/data/db
     command:
@@ -147,7 +146,7 @@ services:
       - "27024:27024"
     networks:
       app-network:
-        ipv4_address: 173.17.0.17
+        ipv4_address: 173.18.0.17
     command:
       [
         "mongos",
@@ -174,7 +173,7 @@ services:
       - "8080:8080"
     networks:
       app-network:
-        ipv4_address: 173.17.0.18
+        ipv4_address: 173.18.0.18
     environment:
       MONGODB_URL: "mongodb://mongos_router:27024"
       MONGODB_DATABASE_NAME: "somedb"
@@ -185,7 +184,7 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: 173.17.0.0/16
+        - subnet: 173.18.0.0/16
 
 volumes:
   config-data:
@@ -195,4 +194,3 @@ volumes:
   shard2-primary-data:
   shard2-secondary1-data:
   shard2-secondary2-data:
-
