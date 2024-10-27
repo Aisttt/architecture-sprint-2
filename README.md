@@ -12,7 +12,7 @@
    
    Если требуется удалить контейнеры 
    ```bash
-   docker rm -f $(docker ps -aq)    - удалить ввсе контейнеры
+   docker rm -f $(docker ps -aq) 
    ```
 
 
