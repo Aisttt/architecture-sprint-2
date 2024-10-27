@@ -76,14 +76,14 @@ EOF
 
 Включите шардирование для базы данных `somedb`:
 ```bash
-docker compose exec -T mongos_router mongosh --port 27020 --quiet <<EOF
+docker compose exec -T mongos_router mongosh --port 27024 --quiet <<EOF
 sh.enableSharding("somedb")
 EOF
 ```
 
 Создайте коллекцию `helloDoc` с индексом, необходимым для шардирования:
 ```bash
-docker compose exec -T mongos_router mongosh --port 27020 --quiet <<EOF
+docker compose exec -T mongos_router mongosh --port 27024 --quiet <<EOF
 use somedb
 db.createCollection("helloDoc")
 db.helloDoc.createIndex({ _id: "hashed" })
