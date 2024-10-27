@@ -97,9 +97,12 @@ EOF
 ```bash
 docker compose exec -T mongos_router mongosh --port 27024 --quiet <<EOF
 use somedb
+db.helloDoc.deleteMany({})
+let bulk = []
 for (let i = 0; i < 1000; i++) {
-  db.helloDoc.insert({ _id: i, message: "Hello from document " + i })
+  bulk.push({ _id: i, message: "Hello from document " + i })
 }
+db.helloDoc.insertMany(bulk)
 EOF
 ```
 
