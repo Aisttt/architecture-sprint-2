@@ -1,0 +1,196 @@
+name: mongo-sharding-repl
+
+services:
+  # Сервер конфигурации
+  configSrv:
+    image: mongo:latest
+    container_name: configSrv
+    restart: always
+    ports:
+      - "27017:27017"
+    networks:
+      app-network:
+        ipv4_address: 173.18.0.10
+    volumes:
+      - config-data:/data/db
+    command:
+      [
+        "--configsvr",
+        "--replSet",
+        "config_server",
+        "--bind_ip_all",
+        "--port",
+        "27017"
+      ]
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  # Первый шард с репликами
+  shard1-primary:
+    image: mongo:latest
+    container_name: shard1-primary
+    networks:
+      app-network:
+        ipv4_address: 173.18.0.11
+    volumes:
+      - shard1-primary-data:/data/db
+    command:
+      [
+        "--shardsvr",
+        "--replSet",
+        "shard1",
+        "--bind_ip_all",
+        "--port",
+        "27018"
+      ]
+
+  shard1-secondary1:
+    image: mongo:latest
+    container_name: shard1-secondary1
+    networks:
+      app-network:
+        ipv4_address: 173.18.0.12
+    volumes:
+      - shard1-secondary1-data:/data/db
+    command:
+      [
+        "--shardsvr",
+        "--replSet",
+        "shard1",
+        "--bind_ip_all",
+        "--port",
+        "27019"
+      ]
+
+  shard1-secondary2:
+    image: mongo:latest
+    container_name: shard1-secondary2
+    networks:
+      app-network:
+        ipv4_address: 173.18.0.13
+    volumes:
+      - shard1-secondary2-data:/data/db
+    command:
+      [
+        "--shardsvr",
+        "--replSet",
+        "shard1",
+        "--bind_ip_all",
+        "--port",
+        "27020"
+      ]
+
+  # Второй шард с репликами
+  shard2-primary:
+    image: mongo:latest
+    container_name: shard2-primary
+    networks:
+      app-network:
+        ipv4_address: 173.18.0.14
+    volumes:
+      - shard2-primary-data:/data/db
+    command:
+      [
+        "--shardsvr",
+        "--replSet",
+        "shard2",
+        "--bind_ip_all",
+        "--port",
+        "27021"
+      ]
+
+  shard2-secondary1:
+    image: mongo:latest
+    container_name: shard2-secondary1
+    networks:
+      app-network:
+        ipv4_address: 173.18.0.15
+    volumes:
+      - shard2-secondary1-data:/data/db
+    command:
+      [
+        "--shardsvr",
+        "--replSet",
+        "shard2",
+        "--bind_ip_all",
+        "--port",
+        "27022"
+      ]
+
+  shard2-secondary2:
+    image: mongo:latest
+    container_name: shard2-secondary2
+    networks:
+      app-network:
+        ipv4_address: 173.18.0.16
+    volumes:
+      - shard2-secondary2-data:/data/db
+    command:
+      [
+        "--shardsvr",
+        "--replSet",
+        "shard2",
+        "--bind_ip_all",
+        "--port",
+        "27023"
+      ]
+
+  # Роутер mongos
+  mongos_router:
+    image: mongo:latest
+    container_name: mongos_router
+    restart: always
+    ports:
+      - "27024:27024"
+    networks:
+      app-network:
+        ipv4_address: 173.18.0.17
+    command:
+      [
+        "mongos",
+        "--configdb", 
+        "config_server/configSrv:27017",
+        "--bind_ip_all",
+        "--port",
+        "27024"
+      ]
+    healthcheck:
+      test: [ "CMD", "mongo", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      start_period: 10s
+
+  # pymongo API сервис
+  pymongo_api:
+    build:
+      context: api_app
+      dockerfile: Dockerfile
+    container_name: pymongo_api
+    depends_on:
+      - mongos_router
+    ports:
+      - "8080:8080"
+    networks:
+      app-network:
+        ipv4_address: 173.18.0.18
+    environment:
+      MONGODB_URL: "mongodb://mongos_router:27024"
+      MONGODB_DATABASE_NAME: "somedb"
+
+networks:
+  app-network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 173.18.0.0/16
+
+volumes:
+  config-data:
+  shard1-primary-data:
+  shard1-secondary1-data:
+  shard1-secondary2-data:
+  shard2-primary-data:
+  shard2-secondary1-data:
+  shard2-secondary2-data:

@@ -1,7 +1,6 @@
-# MongoDB Sharding, Replication, and Caching Project
+# MongoDB Sharding and Replication Project
 
-Этот проект настраивает MongoDB с шардированием, репликацией и кэшированием для повышения отказоустойчивости и производительности. Конфигурация включает два шарда, каждый с набором из трех реплик (Primary и два Secondary), сервер конфигурации, роутер `mongos`, и кэш Redis. Основная база данных называется `somedb`, а коллекция — `helloDoc`.
-[Схема в draw.io](https://drive.google.com/file/d/16JmK29Nd7rr-2nO41efosJmce-nRMpzB/view?usp=sharing)
+Этот проект настраивает MongoDB с шардированием и репликацией для повышения отказоустойчивости. Конфигурация включает два шарда, каждый с набором из трех реплик (Primary и два Secondary), сервер конфигурации и роутер `mongos`. Основная база данных называется `somedb`, а коллекция — `helloDoc`.
 
 ## Шаги для запуска проекта
 
@@ -10,7 +9,7 @@
    docker compose up -d
    ```
    
-   Если требуется удалить контейнеры:
+   Если требуется удалить контейнеры 
    ```bash
    docker rm -f $(docker ps -aq)
    ```
@@ -20,7 +19,7 @@
    docker ps
    ```
 
-## Настройка репликации и шардирования
+## Настройка репликации
 
 ### 1. Инициализация набора реплик для сервера конфигурации
 
@@ -73,29 +72,24 @@ sh.addShard("shard2/shard2-primary:27021")
 EOF
 ```
 
-### 4. Включение шардирования для базы данных и коллекции
+### 4. Включение шардирования для базы данных `somedb` и коллекции `helloDoc`
 
-1. **Создайте индекс на поле `_id` для шардирования**:
-   ```bash
-   docker compose exec -T mongos_router mongosh --port 27024 --quiet <<EOF
-   use somedb
-   db.helloDoc.createIndex({ _id: "hashed" })
-   EOF
-   ```
+Включите шардирование для базы данных `somedb`:
+```bash
+docker compose exec -T mongos_router mongosh --port 27024 --quiet <<EOF
+sh.enableSharding("somedb")
+EOF
+```
 
-2. **Включите шардирование для базы данных и коллекции**:
-   ```bash
-   docker compose exec -T mongos_router mongosh --port 27024 --quiet <<EOF
-   use admin
-   sh.enableSharding("somedb")
-   sh.shardCollection("somedb.helloDoc", { "_id": "hashed" })
-   EOF
-   ```
-
-## Шаги для проверки кэширования
-
-1. Выполните запрос к эндпоинту `http://localhost:8080/helloDoc/users`. Это первый запрос, который может занять больше времени.
-2. Повторите запрос несколько раз. Скорость выполнения второго и последующих запросов должна увеличиться, и время выполнения должно быть <100мс.
+Создайте коллекцию `helloDoc` с индексом, необходимым для шардирования:
+```bash
+docker compose exec -T mongos_router mongosh --port 27024 --quiet <<EOF
+use somedb
+db.createCollection("helloDoc")
+db.helloDoc.createIndex({ _id: "hashed" })
+sh.shardCollection("somedb.helloDoc", { _id: "hashed" })
+EOF
+```
 
 ## Проверка работы шардирования и репликации
 
@@ -132,4 +126,3 @@ use somedb
 db.helloDoc.countDocuments()
 EOF
 ```
-

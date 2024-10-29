@@ -1,7 +1,6 @@
 # MongoDB Sharding, Replication, and Caching Project
 
 Этот проект настраивает MongoDB с шардированием, репликацией и кэшированием для повышения отказоустойчивости и производительности. Конфигурация включает два шарда, каждый с набором из трех реплик (Primary и два Secondary), сервер конфигурации, роутер `mongos`, и кэш Redis. Основная база данных называется `somedb`, а коллекция — `helloDoc`.
-[Схема в draw.io](https://drive.google.com/file/d/16JmK29Nd7rr-2nO41efosJmce-nRMpzB/view?usp=sharing)
 
 ## Шаги для запуска проекта
 
@@ -10,9 +9,9 @@
    docker compose up -d
    ```
    
-   Если требуется удалить контейнеры:
+   Если требуется удалить контейнеры 
    ```bash
-   docker rm -f $(docker ps -aq)
+   docker rm -f $(docker ps -aq) 
    ```
 
 2. Убедитесь, что все контейнеры запущены:
@@ -75,22 +74,15 @@ EOF
 
 ### 4. Включение шардирования для базы данных и коллекции
 
-1. **Создайте индекс на поле `_id` для шардирования**:
-   ```bash
-   docker compose exec -T mongos_router mongosh --port 27024 --quiet <<EOF
-   use somedb
-   db.helloDoc.createIndex({ _id: "hashed" })
-   EOF
-   ```
+После добавления шардов включите шардирование для базы данных `somedb` и коллекции `helloDoc`:
 
-2. **Включите шардирование для базы данных и коллекции**:
-   ```bash
-   docker compose exec -T mongos_router mongosh --port 27024 --quiet <<EOF
-   use admin
-   sh.enableSharding("somedb")
-   sh.shardCollection("somedb.helloDoc", { "_id": "hashed" })
-   EOF
-   ```
+```bash
+docker compose exec -T mongos_router mongosh --port 27024 --quiet <<EOF
+use admin
+sh.enableSharding("somedb")
+sh.shardCollection("somedb.helloDoc", { "_id": "hashed" })
+EOF
+```
 
 ## Шаги для проверки кэширования
 
@@ -103,12 +95,9 @@ EOF
 ```bash
 docker compose exec -T mongos_router mongosh --port 27024 --quiet <<EOF
 use somedb
-db.helloDoc.deleteMany({})
-let bulk = []
 for (let i = 0; i < 1000; i++) {
-  bulk.push({ _id: i, message: "Hello from document " + i })
+  db.helloDoc.insert({ _id: i, message: "Hello from document " + i })
 }
-db.helloDoc.insertMany(bulk)
 EOF
 ```
 
@@ -132,4 +121,3 @@ use somedb
 db.helloDoc.countDocuments()
 EOF
 ```
-
